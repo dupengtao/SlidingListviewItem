@@ -11,203 +11,234 @@ import android.widget.AbsListView;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
+
 /**
  * 
  * @author dupengtao88@gmail.com
- *
- * 2014-4-2
+ * 
+ *         2014-4-2
  */
 public class HorizontalScrollViewItem extends HorizontalScrollView {
 
-    public interface ScrollViewListener {
-        void onScrollChanged(HorizontalScrollViewItem scrollView, int x, int y, int oldx, int oldy);
-    }
+	public interface ScrollViewListener {
+		void onScrollChanged(HorizontalScrollViewItem scrollView, int x, int y,
+				int oldx, int oldy);
+	}
 
-    private Context mContext;
-    private View mView;
-    private LinearLayout mLlFirstView,mLlSecondView,mLBodyView;
-    private int offset;
-    private GestureDetector gestureDetector;
-    protected int msTate = -1;
-    private HorizontalScrollViewItem mScrollView;
-    private ScrollViewListener scrollViewListener = null;
-    private int mY;
-    private boolean isMove;
+	private Context mContext;
+	private View mView;
+	private LinearLayout mLlFirstView, mLlSecondView, mLBodyView;
+	private int offset;
+	private GestureDetector gestureDetector;
+	protected int msTate = -1;
+	private HorizontalScrollViewItem mScrollView;
+	private ScrollViewListener scrollViewListener = null;
+	private int mY;
+	private boolean isMove;
+	private Runnable mRestCb;
 
-    public HorizontalScrollViewItem(Context context,View itemFrist,View itemSecond) {
-        super(context);
-        mContext = context;
-        mScrollView = HorizontalScrollViewItem.this;
-        initXml(itemFrist,itemSecond);
-        setEvents();
-    }
+	public HorizontalScrollViewItem(Context context, View itemFrist,
+			View itemSecond) {
+		super(context);
+		mContext = context;
+		mScrollView = HorizontalScrollViewItem.this;
+		initXml(itemFrist, itemSecond);
+		setEvents();
+	}
 
-    private void setEvents() {
-        mSwipeDetectorCallBack = new SwipeDetectorCallBack() {
-            @Override
-            public void onToRight() {
-                msTate = 1;
-            }
+	private void setEvents() {
+		mSwipeDetectorCallBack = new SwipeDetectorCallBack() {
+			@Override
+			public void onToRight() {
+				msTate = 1;
+			}
 
-            @Override
-            public void onToLeft() {
-                msTate = 2;
-            }
+			@Override
+			public void onToLeft() {
+				msTate = 2;
+			}
 
-            @Override
-            public void onBackRight() {
-                msTate = 3;
-            }
+			@Override
+			public void onBackRight() {
+				msTate = 3;
+			}
 
-            @Override
-            public void onBackLeft() {
-                msTate = 4;
-            }
-        };
-        gestureDetector = new GestureDetector(mContext, new SwipeDetector(
-                mSwipeDetectorCallBack));
+			@Override
+			public void onBackLeft() {
+				msTate = 4;
+			}
+		};
+		gestureDetector = new GestureDetector(mContext, new SwipeDetector(
+				mSwipeDetectorCallBack));
 
-        this.setOnTouchListener(new OnTouchListener() {
+		this.setOnTouchListener(new OnTouchListener() {
 
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                gestureDetector.onTouchEvent(event);
-                int action = event.getAction();
-                mY = (int) event.getY();
-                switch (action & MotionEvent.ACTION_MASK) {
-                    case MotionEvent.ACTION_DOWN:
-                        break;
-                    case MotionEvent.ACTION_MOVE:
-                        break;
-                    case MotionEvent.ACTION_UP: {
-                        switch (msTate) {
-                            case 1: {// scroll to right
-                                scrollToRight();
-                            }
-                                break;
-                            case 2: {// scroll to left
-                                scrollToLeft();
-                            }
-                                break;
-                            case 3: {// back to right
-                                scrollToRight();
-                            }
-                                break;
-                            case 4: {// back to left
-                                scrollToLeft();
-                            }
-                                break;
-                        }
-                        msTate = -1;
-                    }
-                        break;
-                }
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				gestureDetector.onTouchEvent(event);
+				int action = event.getAction();
+				mY = (int) event.getY();
+				switch (action & MotionEvent.ACTION_MASK) {
+				case MotionEvent.ACTION_DOWN:
+					break;
+				case MotionEvent.ACTION_MOVE:
+					break;
+				case MotionEvent.ACTION_UP: {
+					switch (msTate) {
+					case 1: {// scroll to right
+						scrollToRight();
+					}
+						break;
+					case 2: {// scroll to left
+						scrollToLeft();
+					}
+						break;
+					case 3: {// back to right
+						scrollToRight();
+					}
+						break;
+					case 4: {// back to left
+						scrollToLeft();
+					}
+						break;
+					}
+					msTate = -1;
+				}
+					break;
+				}
 
-                return false;
+				return false;
 
-            }
-        });
+			}
+		});
 
-    }
+	}
 
-    public boolean isMove() {
-        return isMove;
-    }
+	public void setRestCb(Runnable restCb) {
+		this.mRestCb = restCb;
+	}
 
-    private void initXml(View itemFrist, View itemSecond) {
-        AbsListView.LayoutParams params = new AbsListView.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.WRAP_CONTENT);
-        this.setLayoutParams(params);
-        this.setPadding(0, 15, 0, 15);
-        this.setVerticalScrollBarEnabled(false);
-        this.setHorizontalScrollBarEnabled(false);
-        this.setFillViewport(true);
-        mView = View.inflate(mContext, R.layout.item, this);
-        mLBodyView = (LinearLayout) mView.findViewById(R.id.llContext);
-        mLlFirstView = (LinearLayout) mView.findViewById(R.id.ll1);
-        mLlSecondView = (LinearLayout) mView.findViewById(R.id.ll2);
-        DisplayMetrics dm = new DisplayMetrics();
-        ((Activity) mContext).getWindowManager().getDefaultDisplay().getMetrics(dm);
-        int screenW = dm.widthPixels;
-        //do not forget paddingLeft or paddingRight
-        int f = (int) mContext.getResources().getDimension(R.dimen.activity_vertical_margin);
-        mLBodyView.getLayoutParams().width = screenW * 2 - 2 * f;
-        mLlFirstView.getLayoutParams().width = screenW - 2 * f;
-        mLlSecondView.getLayoutParams().width = screenW - 2 * f;
-        offset = (screenW - 2 * f) / 8;
-        //add your item
-        mLlFirstView.addView(itemFrist);
-        mLlSecondView.addView(itemSecond);
-    }
+	public boolean isMove() {
+		return isMove;
+	}
 
-    @Override
-    protected void onScrollChanged(int x, int y, int oldx, int oldy) {
-        super.onScrollChanged(x, y, oldx, oldy);
-        if (scrollViewListener != null) {
-            scrollViewListener.onScrollChanged(this, x, y, oldx, oldy);
-        }
-    }
-    public void setScrollViewListener(ScrollViewListener scrollViewListener) {
-        this.scrollViewListener = scrollViewListener;
-    }
-    public void scrollToRight() {
-        mScrollView.post(new Runnable() {
-            public void run() {
-                mScrollView.smoothScrollTo(0, mY);
-                isMove = false;
-            }
-        });
-    }
+	private void initXml(View itemFrist, View itemSecond) {
+		AbsListView.LayoutParams params = new AbsListView.LayoutParams(
+				FrameLayout.LayoutParams.MATCH_PARENT,
+				FrameLayout.LayoutParams.WRAP_CONTENT);
+		this.setLayoutParams(params);
+		this.setPadding(0, 15, 0, 15);
+		this.setVerticalScrollBarEnabled(false);
+		this.setHorizontalScrollBarEnabled(false);
+		this.setFillViewport(true);
+		mView = View.inflate(mContext, R.layout.item, this);
+		mLBodyView = (LinearLayout) mView.findViewById(R.id.llContext);
+		mLlFirstView = (LinearLayout) mView.findViewById(R.id.ll1);
+		mLlSecondView = (LinearLayout) mView.findViewById(R.id.ll2);
+		DisplayMetrics dm = new DisplayMetrics();
+		((Activity) mContext).getWindowManager().getDefaultDisplay()
+				.getMetrics(dm);
+		int screenW = dm.widthPixels;
+		// do not forget paddingLeft or paddingRight
+		int f = (int) mContext.getResources().getDimension(
+				R.dimen.activity_vertical_margin);
+		mLBodyView.getLayoutParams().width = screenW * 2 - 2 * f;
+		mLlFirstView.getLayoutParams().width = screenW - 2 * f;
+		mLlSecondView.getLayoutParams().width = screenW - 2 * f;
+		offset = (screenW - 2 * f) / 8;
+		// add your item
+		mLlFirstView.addView(itemFrist);
+		mLlSecondView.addView(itemSecond);
+	}
 
-    public void scrollToLeft() {
-        mScrollView.post(new Runnable() {
-            public void run() {
-                mScrollView.smoothScrollTo(10000, mY);
-                isMove = true;
-            }
-        });
-    }
+	@Override
+	protected void onScrollChanged(int x, int y, int oldx, int oldy) {
+		super.onScrollChanged(x, y, oldx, oldy);
+		if (scrollViewListener != null) {
+			scrollViewListener.onScrollChanged(this, x, y, oldx, oldy);
+		}
+	}
 
-    public void scrollBack() {
-        scrollToRight();
-    }
+	public void setScrollViewListener(ScrollViewListener scrollViewListener) {
+		this.scrollViewListener = scrollViewListener;
+	}
 
-    private SwipeDetectorCallBack mSwipeDetectorCallBack;
+	public void scrollToRight() {
+		mScrollView.post(new Runnable() {
+			public void run() {
+				mScrollView.smoothScrollTo(0, mY);
+				isMove = false;
+			}
+		});
+	}
 
-    interface SwipeDetectorCallBack {
-        void onToRight();
+	public void scrollToLeft() {
+		mScrollView.post(new Runnable() {
+			public void run() {
+				mScrollView.smoothScrollTo(10000, mY);
+				isMove = true;
+			}
+		});
+	}
 
-        void onBackRight();
+	public void scrollBack() {
+		scrollToRight();
+	}
 
-        void onToLeft();
+	private SwipeDetectorCallBack mSwipeDetectorCallBack;
 
-        void onBackLeft();
-    }
+	interface SwipeDetectorCallBack {
+		void onToRight();
 
-    class SwipeDetector extends SimpleOnGestureListener {
-        SwipeDetectorCallBack swipeDetectorCallBack;
+		void onBackRight();
 
-        public SwipeDetector(SwipeDetectorCallBack swipeDetectorCallBack) {
-            this.swipeDetectorCallBack = swipeDetectorCallBack;
-        }
+		void onToLeft();
 
-        @Override
-        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-            try {
-                if (e1.getX() - e2.getX() > offset) {
-                    swipeDetectorCallBack.onToLeft();
-                } else if (e2.getX() - e1.getX() > offset) {
-                    swipeDetectorCallBack.onToRight();
-                } else if (e1.getX() - e2.getX() < offset && e1.getX() - e2.getX() > 0) {
-                    swipeDetectorCallBack.onBackRight();
-                } else if (e1.getX() - e2.getX() > offset * -1 && e1.getX() - e2.getX() < 0) {
-                    swipeDetectorCallBack.onBackLeft();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return super.onScroll(e1, e2, distanceX, distanceY);
-        }
-    }
+		void onBackLeft();
+	}
+
+	class SwipeDetector extends SimpleOnGestureListener {
+		SwipeDetectorCallBack swipeDetectorCallBack;
+
+		public SwipeDetector(SwipeDetectorCallBack swipeDetectorCallBack) {
+			this.swipeDetectorCallBack = swipeDetectorCallBack;
+		}
+
+		@Override
+		public boolean onScroll(MotionEvent e1, MotionEvent e2,
+				float distanceX, float distanceY) {
+			if (mRestCb != null) {
+				mRestCb.run();
+			}
+			
+			try {
+				if (e1.getX() - e2.getX() > offset) {
+					swipeDetectorCallBack.onToLeft();
+				} else if (e2.getX() - e1.getX() > offset) {
+					swipeDetectorCallBack.onToRight();
+				} else if (e1.getX() - e2.getX() < offset
+						&& e1.getX() - e2.getX() > 0) {
+					swipeDetectorCallBack.onBackRight();
+				} else if (e1.getX() - e2.getX() > offset * -1
+						&& e1.getX() - e2.getX() < 0) {
+					swipeDetectorCallBack.onBackLeft();
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return super.onScroll(e1, e2, distanceX, distanceY);
+		}
+
+		@Override
+		public boolean onSingleTapConfirmed(MotionEvent e) {
+			if (mRestCb != null) {
+				mRestCb.run();
+			}
+			if (!isMove) {
+				scrollToLeft();
+			}
+			return super.onSingleTapConfirmed(e);
+		}
+	}
 
 }
