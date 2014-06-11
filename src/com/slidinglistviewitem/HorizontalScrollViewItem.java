@@ -101,6 +101,11 @@ public class HorizontalScrollViewItem extends HorizontalScrollView {
 						scrollToLeft();
 					}
 						break;
+					default: {
+						if (!isMove) {
+							scrollToRight();
+						}
+					}
 					}
 					msTate = -1;
 				}
@@ -147,8 +152,12 @@ public class HorizontalScrollViewItem extends HorizontalScrollView {
 		mLlSecondView.getLayoutParams().width = screenW - 2 * f;
 		offset = (screenW - 2 * f) / 8;
 		// add your item
-		mLlFirstView.addView(itemFrist);
-		mLlSecondView.addView(itemSecond);
+		if (itemFrist != null) {
+			mLlFirstView.addView(itemFrist);
+		}
+		if (itemSecond != null){
+			mLlSecondView.addView(itemSecond);
+		}
 	}
 
 	@Override
@@ -210,7 +219,7 @@ public class HorizontalScrollViewItem extends HorizontalScrollView {
 			if (mRestCb != null) {
 				mRestCb.run();
 			}
-			
+
 			try {
 				if (e1.getX() - e2.getX() > offset) {
 					swipeDetectorCallBack.onToLeft();
