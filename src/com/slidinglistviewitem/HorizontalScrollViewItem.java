@@ -36,6 +36,8 @@ public class HorizontalScrollViewItem extends HorizontalScrollView {
 	private int mY;
 	private boolean isMove;
 	private Runnable mRestCb;
+    private View mFirstView;
+    private View mSecondView;
 
 	public HorizontalScrollViewItem(Context context, View itemFrist,
 			View itemSecond) {
@@ -46,7 +48,15 @@ public class HorizontalScrollViewItem extends HorizontalScrollView {
 		setEvents();
 	}
 
-	private void setEvents() {
+    public View getFirstView() {
+        return mFirstView;
+    }
+
+    public View getSecondView() {
+        return mSecondView;
+    }
+
+    private void setEvents() {
 		mSwipeDetectorCallBack = new SwipeDetectorCallBack() {
 			@Override
 			public void onToRight() {
